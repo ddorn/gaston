@@ -1,5 +1,5 @@
 """
-A module to visualise G(E) for a given E
+A module to visualise G(E) for a given E in the problem 2 of the TFJM2017. 
 """
 from time import time
 
@@ -13,7 +13,6 @@ except ImportError:
     input("Press ENTER to quit...")
     quit()
 
-    Vector2 = lambda *args: None
 
 pygame.init()
 
@@ -38,6 +37,7 @@ MARKERS = []
 CONFIGS = [[] for _ in range(10)]
 
 FONT = pygame.font.Font(None, 30)
+
 
 def gcd(a, b, *args):
     if not (a and b):  # one is zero
@@ -168,24 +168,29 @@ def draw_d_lines(screen, l_eq):
             gfxdraw.vline(screen, int(-c / a * GRID_SIZE), 0, SCREEN_SIZE[0], D_COLOR)
 
 
-def draw_poly_e(screen, E):
-    if len(E) > 2:
-        points = [(GRID_SIZE * x, GRID_SIZE * y) for x, y in E]
+def draw_poly_e(screen, e):
+    if len(e) > 2:
+        points = [(GRID_SIZE * x, GRID_SIZE * y) for x, y in e]
         gfxdraw.filled_polygon(screen, points, E_COLOR)
         gfxdraw.aapolygon(screen, points, BLACK)
 
     # if E is a line
-    elif len(E) == 2:
-        A, B = E
-        gfxdraw.line(screen, int(A.x * GRID_SIZE), int(A.y * GRID_SIZE), int(B.x * GRID_SIZE), int(B.y * GRID_SIZE),
-                     BLACK)
+    elif len(e) == 2:
+        a, b = e
+
+        x1 = int(a.x * GRID_SIZE)
+        y1 = int(a.y * GRID_SIZE)
+        x2 = int(b.x * GRID_SIZE)
+        y2 = int(b.y * GRID_SIZE)
+
+        gfxdraw.line(screen, x1, y1, x2, y2, BLACK)
 
 
-def draw_dots(screen, vertices, color):
+def draw_dots(screen, vertices, points_color):
     for x, y in vertices:
         x = int(x * GRID_SIZE)
         y = int(y * GRID_SIZE)
-        gfxdraw.filled_circle(screen, x, y, 4, color)
+        gfxdraw.filled_circle(screen, x, y, 4, points_color)
         gfxdraw.aacircle(screen, x, y, 4, BLACK)
 
 
@@ -217,9 +222,9 @@ def main():
 
                 # save picture
                 if event.key == K_s:
-                    name = f"{int(time())}.png"
+                    name = 'Gaston' + str(int(time())) + ".png"
                     pygame.image.save(screen, name)
-                    print(f"Image saved to {name}")
+                    print("Image saved to " + name)
 
                 # delete the drawing
                 if event.key == K_DELETE:
