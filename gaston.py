@@ -1,21 +1,16 @@
 """
 A module to visualise G(E) for a given E in the problem 2 of the TFJM2017. 
 """
+
 from time import time
 
-try:
-    import pygame
-    from pygame import gfxdraw
-    from pygame.locals import *
-    from pygame.math import Vector2
-except ImportError:
-    print("Pygame isn't installed")
-    input("Press ENTER to quit...")
-    quit()
-
+import pygame
+from pygame import gfxdraw
+from pygame.locals import *
 
 pygame.init()
 
+# colors
 WHITE = [255, 255, 255]
 BLACK = [0, 0, 0]
 GREY_75 = [64, 64, 64]
@@ -71,7 +66,6 @@ def convex_hull(points):
 
     # Sort the points lexicographically (tuples are compared lexicographically).
     # Remove duplicates to detect the case we have just one unique point.
-    points = [(x, y) for x, y in points]
     points = sorted(set(points))
 
     # Boring case: no points or a single point, possibly repeated multiple times.
@@ -100,16 +94,16 @@ def convex_hull(points):
 
     # Concatenation of the lower and upper hulls gives the convex hull.
     # Last point of each list is omitted because it is repeated at the beginning of the other list.
-    return [Vector2(v) for v in lower[:-1] + upper[:-1]]
+    return lower[:-1] + upper[:-1]
 
 
 def calculate_deltalines(e):
-    if len(e) > 2:
+    if len(e) > 1:
         g_lines = []
         for A, B in zip(e, e[1:] + e[:1]):
-            a = int(A.y - B.y)
-            b = int(B.x - A.x)
-            c = int(A.x * B.y - B.x * A.y)
+            a = int(A[1] - B[1])
+            b = int(B[0] - A[0])
+            c = int(A[0] * B[1] - B[0] * A[1])
 
             gcdivisor = gcd(a, b, c)
 
@@ -121,25 +115,36 @@ def calculate_deltalines(e):
             g_lines.append([a, b, c])
 
         return g_lines
+
     else:
         return []
 
 
 def calculate_g_e(g_lines):
     g = []
-    for x in range(SCREEN_SIZE[0] // GRID_SIZE + 2):
-        for y in range(SCREEN_SIZE[1] // GRID_SIZE + 2):
-            in_d_poly = True
-            in_e_poly = True
-            for a, b, c in g_lines:
-                if a * x + b * y + c < 0:
-                    in_d_poly = False
 
-                if a * x + b * y + c - 1 < 0:
-                    in_e_poly = False
+    if g_lines:
+        for x in range(SCREEN_SIZE[0] // GRID_SIZE + 2):
+            for y in range(SCREEN_SIZE[1] // GRID_SIZE + 2):
+                in_d_poly = True
+                in_e_poly = True
+                for a, b, c in g_lines:
+                    if a * x + b * y + c < 0:
+                        in_d_poly = False
 
-            if in_d_poly and not in_e_poly:
-                g.append(Vector2(x, y))
+                    if a * x + b * y + c - 1 < 0:
+                        in_e_poly = False
+
+                if in_d_poly and not in_e_poly:
+                    g.append((x, y))
+
+    # E is a point
+    elif len(E) == 1:
+        a, b = E[0]
+        for x in range(SCREEN_SIZE[0] // GRID_SIZE + 2):
+            for y in range(SCREEN_SIZE[1] // GRID_SIZE + 2):
+                if gcd(abs(x - a), abs(y - b)) == 1:
+                    g.append((x, y))
 
     return g
 
@@ -178,10 +183,10 @@ def draw_poly_e(screen, e):
     elif len(e) == 2:
         a, b = e
 
-        x1 = int(a.x * GRID_SIZE)
-        y1 = int(a.y * GRID_SIZE)
-        x2 = int(b.x * GRID_SIZE)
-        y2 = int(b.y * GRID_SIZE)
+        x1 = int(a[0] * GRID_SIZE)
+        y1 = int(a[1] * GRID_SIZE)
+        x2 = int(b[0] * GRID_SIZE)
+        y2 = int(b[1] * GRID_SIZE)
 
         gfxdraw.line(screen, x1, y1, x2, y2, BLACK)
 
@@ -194,16 +199,22 @@ def draw_dots(screen, vertices, points_color):
         gfxdraw.aacircle(screen, x, y, 4, BLACK)
 
 
-def main():
+def gui():
     global GRID_SIZE, E, G, MARKERS, DELTAS
+
     screen = pygame.display.set_mode(SCREEN_SIZE)
+
+    auto_g = 0
 
     running = True
     while running:
 
-        # checking for events
-        mouse_x, mouse_y = Vector2(pygame.mouse.get_pos()) + Vector2(GRID_SIZE, GRID_SIZE) // 2
+        # mouse pos
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        mouse_x += GRID_SIZE // 2
+        mouse_y += GRID_SIZE // 2
 
+        # checking for events
         event_list = pygame.event.get()
         for event in event_list:
             if event.type == QUIT:
@@ -219,6 +230,17 @@ def main():
                     E = convex_hull(G)
                     DELTAS = calculate_deltalines(E)
                     G = calculate_g_e(DELTAS)
+
+                if event.key == K_a:
+                    if auto_g: # already on
+                        auto_g = 0
+                    else:
+                        auto_g = int(time())
+                # G(E) = F find E
+                # if event.key == K_b:
+                #    E = reverse_g_brute_force(MARKERS)
+                #    DELTAS = calculate_deltalines(E)
+                #    G = calculate_g_e(DELTAS)
 
                 # save picture
                 if event.key == K_s:
@@ -250,7 +272,7 @@ def main():
 
                 # place or remove a point of E
                 if event.button == 1:
-                    new_point = Vector2(mouse_x, mouse_y) // GRID_SIZE
+                    new_point = mouse_x // GRID_SIZE, mouse_y // GRID_SIZE
                     if new_point in E:
                         E.remove(new_point)
                     else:
@@ -262,7 +284,7 @@ def main():
 
                 # right click --> marker point
                 if event.button == 3:
-                    new_point = Vector2(mouse_x, mouse_y) // GRID_SIZE
+                    new_point = mouse_x // GRID_SIZE, mouse_y // GRID_SIZE
                     if new_point in MARKERS:
                         MARKERS.remove(new_point)
                     else:
@@ -277,6 +299,14 @@ def main():
                     if GRID_SIZE < SCREEN_SIZE[0] // 6:
                         GRID_SIZE += 1
 
+        # auto G
+        if auto_g and auto_g < time() - 1:
+            auto_g = time()
+            E = convex_hull(G)
+            DELTAS = calculate_deltalines(E)
+            G = calculate_g_e(DELTAS)
+
+
         screen.fill(WHITE)
 
         # draw E, grid, D-lines, G(E) and markers
@@ -287,6 +317,7 @@ def main():
         draw_dots(screen, G, RED)
         draw_dots(screen, MARKERS, M_COLOR)
 
+        # draw |G(E)|
         ge = FONT.render('|G(E)| = ' + str(len(G)), True, BLACK)
         pygame.Surface.blit(screen, ge, (10, 10))
 
@@ -297,4 +328,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    gui()
