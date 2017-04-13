@@ -15,6 +15,7 @@ WHITE = [255, 255, 255]
 BLACK = [0, 0, 0]
 GREY_75 = [64, 64, 64]
 GREY_25 = [192, 192, 192]
+GREY_10 = [220, 220, 220]
 RED = [255, 0, 0]
 BLUE = [0, 0, 255]
 GREEN = [0, 255, 0]
@@ -31,7 +32,7 @@ DELTAS = []
 MARKERS = []
 CONFIGS = [[] for _ in range(10)]
 
-FONT = pygame.font.Font(None, 30)
+FONT = pygame.font.Font('segoeuil.ttf', 20)
 
 
 def gcd(a, b, *args):
@@ -100,7 +101,7 @@ def convex_hull(points):
 def calculate_deltalines(e):
     if len(e) > 1:
         g_lines = []
-        for A, B in zip(e, e[1:] + e[:1]):
+        for A, B in segments(e):
             a = int(A[1] - B[1])
             b = int(B[0] - A[0])
             c = int(A[0] * B[1] - B[0] * A[1])
@@ -121,21 +122,14 @@ def calculate_deltalines(e):
 
 
 def calculate_g_e(g_lines):
-    g = []
+    e_lines = [(a, b, c - 1) for a, b, c in g_lines]
 
+    g = []
     if g_lines:
         for x in range(SCREEN_SIZE[0] // GRID_SIZE + 2):
             for y in range(SCREEN_SIZE[1] // GRID_SIZE + 2):
-                in_d_poly = True
-                in_e_poly = True
-                for a, b, c in g_lines:
-                    if a * x + b * y + c < 0:
-                        in_d_poly = False
 
-                    if a * x + b * y + c - 1 < 0:
-                        in_e_poly = False
-
-                if in_d_poly and not in_e_poly:
+                if in_poly(x, y, g_lines) and not in_poly(x, y, e_lines):
                     g.append((x, y))
 
     # E is a point
@@ -149,6 +143,23 @@ def calculate_g_e(g_lines):
     return g
 
 
+def in_poly(x, y, lines_eq):
+    in_poly = True
+    for a, b, c in lines_eq:
+        if a * x + b * y + c < 0:
+            in_poly = False
+
+    return in_poly
+
+
+def segments(points):
+    return zip(points, points[1:] + points[:1])
+
+
+def area(points):
+    return 0.5 * abs(sum(x0 * y1 - x1 * y0 for ((x0, y0), (x1, y1)) in segments(points)))
+
+
 def draw_grid(screen):
     for x in range(GRID_SIZE, SCREEN_SIZE[0], GRID_SIZE):
         gfxdraw.vline(screen, x, 0, SCREEN_SIZE[1], GREY_25)
@@ -160,15 +171,29 @@ def draw_grid(screen):
 def draw_d_lines(screen, l_eq):
     for a, b, c in l_eq:
         if b != 0:
+
             m = -a / b
             p = -c / b
-            point1 = m * 0 + p
-            point2 = m * (SCREEN_SIZE[1] / GRID_SIZE) + p
 
-            point1 *= GRID_SIZE
-            point2 *= GRID_SIZE
+            if abs(m) < 1:
 
-            gfxdraw.line(screen, 0, int(point1), SCREEN_SIZE[0], int(point2), D_COLOR)
+                point1 = m * 0 + p
+                point2 = m * (SCREEN_SIZE[0] / GRID_SIZE) + p
+
+                point1 *= GRID_SIZE
+                point2 *= GRID_SIZE
+
+                gfxdraw.line(screen, 0, int(point1), SCREEN_SIZE[0], int(point2), D_COLOR)
+
+            else:
+                point1 = - p / m
+                point2 = (SCREEN_SIZE[1] / GRID_SIZE - p) / m
+
+                point1 *= GRID_SIZE
+                point2 *= GRID_SIZE
+
+                gfxdraw.line(screen, int(point1), 0, int(point2), SCREEN_SIZE[1], D_COLOR)
+
         else:
             gfxdraw.vline(screen, int(-c / a * GRID_SIZE), 0, SCREEN_SIZE[0], D_COLOR)
 
@@ -214,12 +239,8 @@ def to_tikz(e, deltas, g):
     # draw forest
     for x in range(SCREEN_SIZE[0] // GRID_SIZE):
         for y in range(SCREEN_SIZE[1] // GRID_SIZE):
-            in_d_poly = True
-            for a, b, c in deltas:
-                if a * x + b * y + c < 0:
-                    in_d_poly = False
 
-            if not in_d_poly:
+            if not in_poly(x, y, deltas):
                 s += r"\draw [fill=eqeqeq] ({x}, {y}) circle (2.5pt);".format(x=x, y=y)
                 s += '\n'
 
@@ -243,11 +264,15 @@ def to_tikz(e, deltas, g):
     # draw E
     # E's middle
     r = ') -- ('.join([str(x) + ', ' + str(y) for x, y in e])
-    s += r"\fill[line width=0.pt,,color=wqwqwq,fill=wqwqwq,fill opacity=0.4] (" + r + ") -- cycle;"
-    s += '\n'
+    s += r"\fill[line width=0.pt,,color=wqwqwq,fill=wqwqwq,fill opacity=0.4] (" + r + ") -- cycle;" + '\n'
+
+    # E's name
+    bary_x = str(sum([x for x, _ in e]))
+    bary_y = str(sum([y for _, y in e]))
+    s += r"\draw (" + bary_x + ', ' + bary_y + ') node {$E$};' + '\n'
 
     # E's border
-    for a, b in zip(e, e[1:] + e[:1]):
+    for a, b in segments(e):
         s += r'\draw [line width=1pt] ({a_x}, {a_y})-- ({b_x}, {b_y});'.format(a_x=a[0],
                                                                                 a_y=a[1],
                                                                                 b_x=b[0],
@@ -275,6 +300,7 @@ def to_tikz(e, deltas, g):
     # We put the string in the clipboard, for an easy use
     pygame.scrap.init()
     pygame.scrap.put(SCRAP_TEXT, s.encode())
+
 
 def gui():
     global GRID_SIZE, E, G, MARKERS, DELTAS
@@ -314,11 +340,6 @@ def gui():
                         auto_g = 0
                     else:
                         auto_g = int(time())
-                # G(E) = F find E
-                # if event.key == K_b:
-                #    E = reverse_g_brute_force(MARKERS)
-                #    DELTAS = calculate_deltalines(E)
-                #    G = calculate_g_e(DELTAS)
 
                 # save picture
                 if event.key == K_s:
@@ -326,6 +347,7 @@ def gui():
                     pygame.image.save(screen, name)
                     print("Image saved to " + name)
 
+                # generate Tikz
                 if event.key == K_t:
                     to_tikz(E, DELTAS, G)
 
@@ -389,17 +411,25 @@ def gui():
 
         screen.fill(WHITE)
 
-        # draw E, grid, D-lines, G(E) and markers
+        screen.fill(GREY_10, (0, 0, 130, 100))
+
         draw_poly_e(screen, E)
         draw_grid(screen)
+
+        # draw |G(E)|, |E|, A(E)
+        size_ge = FONT.render('|G(E)| = ' + str(len(G)), True, BLACK)
+        size_e = FONT.render('|E| = ' + str(len(E)), True, BLACK)
+        area_e = FONT.render('A(E) = ' + str(area(E)), True, BLACK)
+        screen.blit(size_ge, (10, 10))
+        screen.blit(size_e, (10, 35))
+        screen.blit(area_e, (10, 60))
+
+        # draw E, grid, D-lines, G(E) and markers
+
         draw_d_lines(screen, DELTAS)
         draw_dots(screen, E, BLUE)
         draw_dots(screen, G, RED)
         draw_dots(screen, MARKERS, M_COLOR)
-
-        # draw |G(E)|
-        ge = FONT.render('|G(E)| = ' + str(len(G)), True, BLACK)
-        pygame.Surface.blit(screen, ge, (10, 10))
 
         # draw mouse
         gfxdraw.aacircle(screen, int(mouse_x // GRID_SIZE * GRID_SIZE), int(mouse_y // GRID_SIZE * GRID_SIZE), 5, BLUE)
