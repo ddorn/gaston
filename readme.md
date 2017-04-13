@@ -15,6 +15,7 @@ The goal of this little software it to easily define an enclosure _E_ and visual
  * `A` to automatically apply G every second *(on / off)*
  * `Alt + nbr` to save a configuration in the `nbr` slot
  * `nbr` to take back a configuration
+ * `T` to generate the Tikz code of the figure *(print + put in clipboard)*
  * `Suppr` to clear the board
  * `left click` to add or delete a point of _E_
  * `right click` to add or delete a marker

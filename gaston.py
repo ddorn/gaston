@@ -199,6 +199,83 @@ def draw_dots(screen, vertices, points_color):
         gfxdraw.aacircle(screen, x, y, 4, BLACK)
 
 
+def to_tikz(e, deltas, g):
+    s = r"""
+    \begin{figure}[h!]
+    \begin{center}
+    \begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1cm,y=1cm]
+    \draw [color=cqcqcq,, xstep=1,ystep=1] (-0.5, -0.5) grid""" + "({0}, {1});".format(SCREEN_SIZE[0] // GRID_SIZE-0.5,
+                                                                                 SCREEN_SIZE[1] // GRID_SIZE-0.5)
+    s += '\n'
+    s += r"\clip (-0.5, -0.5) rectangle ({0}, {1});".format(SCREEN_SIZE[0] // GRID_SIZE - 0.5,
+                                                    SCREEN_SIZE[1] // GRID_SIZE - 0.5)
+    s += '\n'
+
+    # draw forest
+    for x in range(SCREEN_SIZE[0] // GRID_SIZE):
+        for y in range(SCREEN_SIZE[1] // GRID_SIZE):
+            in_d_poly = True
+            for a, b, c in deltas:
+                if a * x + b * y + c < 0:
+                    in_d_poly = False
+
+            if not in_d_poly:
+                s += r"\draw [fill=eqeqeq] ({x}, {y}) circle (2.5pt);".format(x=x, y=y)
+                s += '\n'
+
+    # draw D-lines
+    for a, b, c in deltas:
+        domain = '-0.5:' + str(SCREEN_SIZE[0]//GRID_SIZE - 0.5)
+        if b:
+            m = -a/b
+            p = -c/b
+            equation = str(m) + r'*\x + ' + str(p)
+
+            s += r"\draw [dash pattern=on 5pt off 5pt,domain=" + domain + r"] plot(\x,{" + equation + "});"
+        else:
+            x = -c/a
+            s += r"\draw [dash pattern=on 5pt off 5pt] ({x}, {y_a}) -- ({x}, {y_b});".format(x=x,
+                                                                                             y_a = -0.5,
+                                                                                             y_b = SCREEN_SIZE[0] // GRID_SIZE - 0.5)
+
+        s += '\n'
+
+    # draw E
+    # E's middle
+    r = ') -- ('.join([str(x) + ', ' + str(y) for x, y in e])
+    s += r"\fill[line width=0.pt,,color=wqwqwq,fill=wqwqwq,fill opacity=0.4] (" + r + ") -- cycle;"
+    s += '\n'
+
+    # E's border
+    for a, b in zip(e, e[1:] + e[:1]):
+        s += r'\draw [line width=1pt] ({a_x}, {a_y})-- ({b_x}, {b_y});'.format(a_x=a[0],
+                                                                                a_y=a[1],
+                                                                                b_x=b[0],
+                                                                                b_y=b[1])
+        s += '\n'
+
+    # E's vertices
+    for x, y in e:
+        s += r"\draw [fill=black] ({x}, {y}) circle (2.5pt);".format(x=x, y=y)
+        s += '\n'
+
+    # G's vertices
+    for x, y in g:
+        s += r"\draw [fill=red] ({x}, {y}) circle (2.5pt);".format(x=x, y=y)
+        s += '\n'
+
+    s += r"\end{tikzpicture}" + '\n'
+    s += r"\end{center}" + '\n'
+    s += r'\caption{G(E) when E is... }' + '\n'
+    s += r"\end{figure}"
+
+    print('\n'*3)
+    print(s)
+
+    # We put the string in the clipboard, for an easy use
+    pygame.scrap.init()
+    pygame.scrap.put(SCRAP_TEXT, s.encode())
+
 def gui():
     global GRID_SIZE, E, G, MARKERS, DELTAS
 
@@ -231,8 +308,9 @@ def gui():
                     DELTAS = calculate_deltalines(E)
                     G = calculate_g_e(DELTAS)
 
+                # auto g
                 if event.key == K_a:
-                    if auto_g: # already on
+                    if auto_g:  # already on
                         auto_g = 0
                     else:
                         auto_g = int(time())
@@ -247,6 +325,9 @@ def gui():
                     name = 'Gaston' + str(int(time())) + ".png"
                     pygame.image.save(screen, name)
                     print("Image saved to " + name)
+
+                if event.key == K_t:
+                    to_tikz(E, DELTAS, G)
 
                 # delete the drawing
                 if event.key == K_DELETE:
@@ -305,7 +386,6 @@ def gui():
             E = convex_hull(G)
             DELTAS = calculate_deltalines(E)
             G = calculate_g_e(DELTAS)
-
 
         screen.fill(WHITE)
 
