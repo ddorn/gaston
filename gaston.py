@@ -257,7 +257,7 @@ def to_tikz(e, deltas, g):
             x = -c/a
             s += r"\draw [dash pattern=on 5pt off 5pt] ({x}, {y_a}) -- ({x}, {y_b});".format(x=x,
                                                                                              y_a = -0.5,
-                                                                                             y_b = SCREEN_SIZE[0] // GRID_SIZE - 0.5)
+                                                                                             y_b = SCREEN_SIZE[1] // GRID_SIZE - 0.5)
 
         s += '\n'
 
@@ -303,9 +303,9 @@ def to_tikz(e, deltas, g):
 
 
 def gui():
-    global GRID_SIZE, E, G, MARKERS, DELTAS
+    global GRID_SIZE, E, G, MARKERS, DELTAS, SCREEN_SIZE
 
-    screen = pygame.display.set_mode(SCREEN_SIZE)
+    screen = pygame.display.set_mode(SCREEN_SIZE, RESIZABLE)
 
     auto_g = 0
 
@@ -322,6 +322,11 @@ def gui():
         for event in event_list:
             if event.type == QUIT:
                 running = False
+
+            # resize the screen
+            elif event.type == VIDEORESIZE:
+                SCREEN_SIZE = event.size
+                screen = pygame.display.set_mode(SCREEN_SIZE, RESIZABLE)
 
             elif event.type == KEYDOWN:
                 # quit
@@ -399,7 +404,7 @@ def gui():
                     if GRID_SIZE > 5:
                         GRID_SIZE -= 1
                 elif event.button == 5:
-                    if GRID_SIZE < SCREEN_SIZE[0] // 6:
+                    if GRID_SIZE < SCREEN_SIZE[1] // 6:
                         GRID_SIZE += 1
 
         # auto G
