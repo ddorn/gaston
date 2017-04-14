@@ -6,13 +6,15 @@ The goal of this little software it to easily define an enclosure _E_ and visual
 
 ### Dependencies
 
- The GUI is based on pygame, so you must install pygame for your python version. If you have some problems with it, there's a [good solution](https://youtu.be/MdGoAnFP-mU).
+ The GUI is based on pygame, so you must install pygame for your python version. If you have some problems with the installation, there's a [good solution](https://youtu.be/MdGoAnFP-mU).
 
 ### Commands
 
  * `S` to save the image
  * `G` to make _E = Conv(G(E))_
  * `A` to automatically apply G every second *(on / off)*
+ * `Page Up` to speed the auto application of A
+ * `Page Down` to slow down the auto application of A
  * `Alt + nbr` to save a configuration in the `nbr` slot
  * `nbr` to take back a configuration
  * `T` to generate the Tikz code of the figure *(print + put in clipboard)*

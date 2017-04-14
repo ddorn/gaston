@@ -126,8 +126,8 @@ def calculate_g_e(g_lines):
 
     g = []
     if g_lines:
-        for x in range(SCREEN_SIZE[0] // GRID_SIZE + 2):
-            for y in range(SCREEN_SIZE[1] // GRID_SIZE + 2):
+        for x in range(SCREEN_SIZE[0] // GRID_SIZE + 1):
+            for y in range(SCREEN_SIZE[1] // GRID_SIZE + 1):
 
                 if in_poly(x, y, g_lines) and not in_poly(x, y, e_lines):
                     g.append((x, y))
@@ -308,6 +308,7 @@ def gui():
     screen = pygame.display.set_mode(SCREEN_SIZE, RESIZABLE)
 
     auto_g = 0
+    auto_g_wait = 1
 
     running = True
     while running:
@@ -345,6 +346,14 @@ def gui():
                         auto_g = 0
                     else:
                         auto_g = int(time())
+
+                # speed up the auto g
+                if event.key == K_PAGEDOWN:
+                    auto_g_wait *= 1.1
+
+                # speed down the auto g
+                if event.key == K_PAGEUP:
+                    auto_g_wait /= 1.1
 
                 # save picture
                 if event.key == K_s:
@@ -408,7 +417,7 @@ def gui():
                         GRID_SIZE += 1
 
         # auto G
-        if auto_g and auto_g < time() - 1:
+        if auto_g and auto_g < time() - auto_g_wait:
             auto_g = time()
             E = convex_hull(G)
             DELTAS = calculate_deltalines(E)
