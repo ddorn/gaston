@@ -27,4 +27,5 @@ The goal of this little software it to easily define an enclosure _E_ and visual
 ### Future developments
 
  * Make an algorithm with a good complexity to solve *G(E) = F*
+ * Show what is hide by each tree
  
