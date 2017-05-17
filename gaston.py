@@ -423,14 +423,16 @@ def gui():
             DELTAS = calculate_deltalines(E)
             G = calculate_g_e(DELTAS)
 
+        # background
         screen.fill(WHITE)
 
+        # upper left corner for information 
         screen.fill(GREY_10, (0, 0, 130, 100))
 
         draw_poly_e(screen, E)
         draw_grid(screen)
 
-        # draw |G(E)|, |E|, A(E)
+        # draw infos : |G(E)|, |E|, A(E)
         size_ge = FONT.render('|G(E)| = ' + str(len(G)), True, BLACK)
         size_e = FONT.render('|E| = ' + str(len(E)), True, BLACK)
         area_e = FONT.render('A(E) = ' + str(area(E)), True, BLACK)
@@ -439,7 +441,6 @@ def gui():
         screen.blit(area_e, (10, 60))
 
         # draw E, grid, D-lines, G(E) and markers
-
         draw_d_lines(screen, DELTAS)
         draw_dots(screen, E, BLUE)
         draw_dots(screen, G, RED)
