@@ -252,10 +252,10 @@ def to_tikz(e, deltas, g):
             p = -c/b
             equation = str(m) + r'*\x + ' + str(p)
 
-            s += r"\draw [dash pattern=on 5pt off 5pt,domain=" + domain + r"] plot(\x,{" + equation + "});"
+            s += r"\draw [color=red,dash pattern=on 5pt off 5pt,domain=" + domain + r"] plot(\x,{" + equation + "});"
         else:
             x = -c/a
-            s += r"\draw [dash pattern=on 5pt off 5pt] ({x}, {y_a}) -- ({x}, {y_b});".format(x=x,
+            s += r"\draw [color=ffqqqq,dash pattern=on 5pt off 5pt] ({x}, {y_a}) -- ({x}, {y_b});".format(x=x,
                                                                                              y_a = -0.5,
                                                                                              y_b = SCREEN_SIZE[1] // GRID_SIZE - 0.5)
 
