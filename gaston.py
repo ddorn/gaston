@@ -172,13 +172,13 @@ def draw_d_lines(screen, l_eq):
     for a, b, c in l_eq:
         if b != 0:
 
-            m = -a / b
-            p = -c / b
+            m = -a / float(b)
+            p = -c / float(b)
 
             if abs(m) < 1:
 
                 point1 = m * 0 + p
-                point2 = m * (SCREEN_SIZE[0] / GRID_SIZE) + p
+                point2 = m * (SCREEN_SIZE[0] / float(GRID_SIZE)) + p
 
                 point1 *= GRID_SIZE
                 point2 *= GRID_SIZE
@@ -186,8 +186,8 @@ def draw_d_lines(screen, l_eq):
                 gfxdraw.line(screen, 0, int(point1), SCREEN_SIZE[0], int(point2), D_COLOR)
 
             else:
-                point1 = - p / m
-                point2 = (SCREEN_SIZE[1] / GRID_SIZE - p) / m
+                point1 = - p / float(m)
+                point2 = (SCREEN_SIZE[1] / float(GRID_SIZE) - p) / float(m)
 
                 point1 *= GRID_SIZE
                 point2 *= GRID_SIZE
@@ -195,7 +195,7 @@ def draw_d_lines(screen, l_eq):
                 gfxdraw.line(screen, int(point1), 0, int(point2), SCREEN_SIZE[1], D_COLOR)
 
         else:
-            gfxdraw.vline(screen, int(-c / a * GRID_SIZE), 0, SCREEN_SIZE[0], D_COLOR)
+            gfxdraw.vline(screen, int(-c / float(a) * GRID_SIZE), 0, SCREEN_SIZE[0], D_COLOR)
 
 
 def draw_poly_e(screen, e):
@@ -248,13 +248,13 @@ def to_tikz(e, deltas, g):
     for a, b, c in deltas:
         domain = '-0.5:' + str(SCREEN_SIZE[0]//GRID_SIZE - 0.5)
         if b:
-            m = -a/b
-            p = -c/b
+            m = -a/float(b)
+            p = -c/float(b)
             equation = str(m) + r'*\x + ' + str(p)
 
             s += r"\draw [color=red,dash pattern=on 5pt off 5pt,domain=" + domain + r"] plot(\x,{" + equation + "});"
         else:
-            x = -c/a
+            x = -c/float(a)
             s += r"\draw [color=ffqqqq,dash pattern=on 5pt off 5pt] ({x}, {y_a}) -- ({x}, {y_b});".format(x=x,
                                                                                              y_a = -0.5,
                                                                                              y_b = SCREEN_SIZE[1] // GRID_SIZE - 0.5)
